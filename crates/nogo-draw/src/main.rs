@@ -14,6 +14,7 @@ use std::str::FromStr;
 // NOGO_SHAPE - a placeholder for an eventual script (lol)
 // NOGO_SIZE - how much of the canvas the shape should encompass, from 0.0-1.0
 // NOGO_WEIGHT - the weight of the lines being drawn
+// NOGO_ROTATION - an amount to rotate the shape in degrees
 // NOGO_SHOW_TURTLE - when true, renders a little turtle (default: false)
 
 fn main() {
@@ -34,6 +35,7 @@ fn view(app: &App, _model: &Model, frame: Frame) {
     let bg_color = color_from_env("NOGO_BG_COLOR", "#00000000");
     let size = float_from_env("NOGO_SIZE", 0.75);
     let weight = float_from_env("NOGO_WEIGHT", 4.0);
+    let rotation = deg_to_rad(float_from_env("NOGO_ROTATION", 0.0));
 
     let draw = app.draw();
     let boundary = app.window_rect();
@@ -45,20 +47,22 @@ fn view(app: &App, _model: &Model, frame: Frame) {
         .as_str()
     {
         "hexagon" => {
-            polygon(6, &draw, boundary, size, weight, line_color);
+            polygon(6, &draw, boundary, size, weight, line_color, rotation);
         }
         "triangle" => {
-            polygon(3, &draw, boundary, size, weight, line_color);
+            polygon(3, &draw, boundary, size, weight, line_color, rotation);
         }
         "square" => {
             square(&draw, boundary, size)
                 .stroke_weight(weight)
-                .stroke_color(line_color);
+                .stroke_color(line_color)
+                .rotate(rotation);
         }
         "circle" => {
             circle(&draw, boundary, size)
                 .stroke_weight(weight)
-                .stroke_color(line_color);
+                .stroke_color(line_color)
+                .rotate(rotation);
         }
         _ => panic!("Unsupported shape type, choose one of [circle, triangle, square, hexagon]"),
     }
@@ -126,6 +130,7 @@ fn polygon(
     size: f32,
     weight: f32,
     color: Rgba<u8>,
+    rotation: f32,
 ) -> Drawing<Path> {
     if sides == 7 {
         panic!("Seven sides?? Don't be ridiculous");
@@ -138,5 +143,9 @@ fn polygon(
         let y = radian.cos() * radius;
         pt2(x, y)
     });
-    draw.polyline().weight(weight).color(color).points(points)
+    draw.polyline()
+        .weight(weight)
+        .color(color)
+        .points(points)
+        .rotate(rotation)
 }
