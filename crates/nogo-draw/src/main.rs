@@ -1,4 +1,8 @@
 use nannou::color::*;
+use nannou::draw::primitive::ellipse::Ellipse;
+use nannou::draw::primitive::Path;
+use nannou::draw::primitive::Rect as DrawRect;
+use nannou::draw::*;
 use nannou::prelude::*;
 use regex::Regex;
 use std::env;
@@ -13,7 +17,10 @@ use std::str::FromStr;
 // NOGO_SHOW_TURTLE - when true, renders a little turtle (default: false)
 
 fn main() {
-    nannou::app(model).simple_window(view).run();
+    nannou::app(model)
+        .size(1000, 1000)
+        .simple_window(view)
+        .run();
 }
 
 struct Model {}
@@ -32,11 +39,15 @@ fn view(app: &App, _model: &Model, frame: Frame) {
     let boundary = app.window_rect();
 
     draw.background().color(bg_color);
-    draw.line()
-        .start(pt2(-boundary.w() / 2.0 * size, boundary.h() / 2.0 * size))
-        .end(pt2(boundary.w() / 2.0 * size, -boundary.h() / 2.0 * size))
-        .weight(weight)
-        .color(line_color);
+
+    let circ = circle(&draw, boundary, size);
+    circ.stroke_weight(weight).stroke_color(line_color);
+
+    let sqr = square(&draw, boundary, size);
+    sqr.stroke_weight(weight).stroke_color(line_color);
+
+    polygon(3, &draw, boundary, size, weight, line_color);
+    polygon(6, &draw, boundary, size, weight, line_color);
 
     draw.to_frame(app, &frame).unwrap();
 
@@ -75,4 +86,43 @@ fn float_from_env(env_var: &str, default_val: f32) -> f32 {
         Ok(val) => f32::from_str(&val).expect("float_from_env received a non-float value from ENV"),
         Err(_error) => default_val,
     }
+}
+
+// Circle
+fn circle(draw: &Draw, boundary: Rect, size: f32) -> Drawing<Ellipse> {
+    draw.ellipse()
+        .width(boundary.w() * size)
+        .height(boundary.h() * size)
+        .no_fill()
+}
+
+// Square
+fn square(draw: &Draw, boundary: Rect, size: f32) -> Drawing<DrawRect> {
+    draw.rect()
+        .width(boundary.w() * size)
+        .height(boundary.h() * size)
+        .no_fill()
+}
+
+// Poly
+fn polygon(
+    sides: usize,
+    draw: &Draw,
+    boundary: Rect,
+    size: f32,
+    weight: f32,
+    color: Rgba<u8>,
+) -> Drawing<Path> {
+    if sides == 7 {
+        panic!("Seven sides?? Don't be ridiculous");
+    }
+
+    let radius = boundary.w() * size / 2.0;
+    let points = (0..=360).step_by(360 / sides).map(|i| {
+        let radian = deg_to_rad(i as f32);
+        let x = radian.sin() * radius;
+        let y = radian.cos() * radius;
+        pt2(x, y)
+    });
+    draw.polyline().weight(weight).color(color).points(points)
 }
