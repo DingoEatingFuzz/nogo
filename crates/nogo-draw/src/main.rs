@@ -6,6 +6,7 @@ use nannou::draw::*;
 use nannou::prelude::*;
 use regex::Regex;
 use std::env;
+use std::process;
 use std::str::FromStr;
 
 // Quick "spec" of env vars
@@ -20,14 +21,37 @@ use std::str::FromStr;
 fn main() {
     nannou::app(model)
         .size(1000, 1000)
+        .update(update)
         .simple_window(view)
         .run();
 }
 
-struct Model {}
+struct Model {
+    count: i32,
+}
 
 fn model(_app: &App) -> Model {
-    Model {}
+    Model { count: 0 }
+}
+
+fn update(app: &App, model: &mut Model, _update: Update) {
+    // Supremely sketch way to make sure the image has saved before
+    // exiting the program.
+    if model.count == 30 {
+        process::exit(0);
+    }
+
+    if model.count == 0 {
+        let path = app
+            .project_path()
+            .expect("no project_path?")
+            .join(app.exe_name().unwrap())
+            .with_extension("png");
+
+        app.main_window().capture_frame(path);
+    }
+
+    model.count += 1;
 }
 
 fn view(app: &App, _model: &Model, frame: Frame) {
@@ -68,14 +92,6 @@ fn view(app: &App, _model: &Model, frame: Frame) {
     }
 
     draw.to_frame(app, &frame).unwrap();
-
-    let path = app
-        .project_path()
-        .expect("no project_path?")
-        .join(app.exe_name().unwrap())
-        .with_extension("png");
-
-    app.main_window().capture_frame(path)
 }
 
 fn color_from_env(env_var: &str, default_val: &str) -> Rgba<u8> {
