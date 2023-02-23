@@ -40,14 +40,28 @@ fn view(app: &App, _model: &Model, frame: Frame) {
 
     draw.background().color(bg_color);
 
-    let circ = circle(&draw, boundary, size);
-    circ.stroke_weight(weight).stroke_color(line_color);
-
-    let sqr = square(&draw, boundary, size);
-    sqr.stroke_weight(weight).stroke_color(line_color);
-
-    polygon(3, &draw, boundary, size, weight, line_color);
-    polygon(6, &draw, boundary, size, weight, line_color);
+    match env::var("NOGO_SHAPE")
+        .unwrap_or("hexagon".to_string())
+        .as_str()
+    {
+        "hexagon" => {
+            polygon(6, &draw, boundary, size, weight, line_color);
+        }
+        "triangle" => {
+            polygon(3, &draw, boundary, size, weight, line_color);
+        }
+        "square" => {
+            square(&draw, boundary, size)
+                .stroke_weight(weight)
+                .stroke_color(line_color);
+        }
+        "circle" => {
+            circle(&draw, boundary, size)
+                .stroke_weight(weight)
+                .stroke_color(line_color);
+        }
+        _ => panic!("Unsupported shape type, choose one of [circle, triangle, square, hexagon]"),
+    }
 
     draw.to_frame(app, &frame).unwrap();
 
