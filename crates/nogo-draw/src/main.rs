@@ -6,6 +6,7 @@ use nannou::draw::*;
 use nannou::prelude::*;
 use regex::Regex;
 use std::env;
+use std::path::Path as SysPath;
 use std::process;
 use std::str::FromStr;
 
@@ -17,6 +18,7 @@ use std::str::FromStr;
 // NOGO_WEIGHT - the weight of the lines being drawn
 // NOGO_ROTATION - an amount to rotate the shape in degrees
 // NOGO_SHOW_TURTLE - when true, renders a little turtle (default: false)
+// NOGO_OUTPUT - the path and file to export to (.png will be appended)
 
 fn main() {
     nannou::app(model)
@@ -28,10 +30,13 @@ fn main() {
 
 struct Model {
     count: i32,
+    output: String,
 }
 
 fn model(_app: &App) -> Model {
-    Model { count: 0 }
+    let output = env::var("NOGO_OUTPUT").unwrap_or("./nogo-draw".to_string());
+
+    Model { count: 0, output }
 }
 
 fn update(app: &App, model: &mut Model, _update: Update) {
@@ -42,12 +47,7 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     }
 
     if model.count == 0 {
-        let path = app
-            .project_path()
-            .expect("no project_path?")
-            .join(app.exe_name().unwrap())
-            .with_extension("png");
-
+        let path = SysPath::new(model.output.as_str()).with_extension("png");
         app.main_window().capture_frame(path);
     }
 
