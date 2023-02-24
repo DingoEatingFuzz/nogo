@@ -1,7 +1,12 @@
 use nannou::prelude::*;
 use std::env;
 use std::fs;
+use std::path::Path as SysPath;
 use std::process;
+
+// Quick "spec" of env vars
+// NOGO_DIR - source directory to read images from
+// NOGO_OUTPUT - the path and file to export to (.png will be appended)
 
 fn main() {
     nannou::app(model)
@@ -14,22 +19,18 @@ fn main() {
 struct Model {
     textures: Vec<wgpu::Texture>,
     count: i32,
+    output: String,
 }
 
 fn update(app: &App, model: &mut Model, _update: Update) {
     // Supremely sketch way to make sure the image has saved before
     // exiting the program.
-    if model.count == 30 {
+    if model.count == 60 {
         process::exit(0);
     }
 
     if model.count == 0 {
-        let path = app
-            .project_path()
-            .expect("no project_path?")
-            .join(app.exe_name().unwrap())
-            .with_extension("png");
-
+        let path = SysPath::new(model.output.as_str()).with_extension("png");
         app.main_window().capture_frame(path);
     }
 
@@ -46,7 +47,13 @@ fn model(app: &App) -> Model {
         textures.push(wgpu::Texture::from_path(app, entry.unwrap().path()).unwrap());
     }
 
-    Model { textures, count: 0 }
+    let output = env::var("NOGO_OUTPUT").unwrap_or("./nogo-draw".to_string());
+
+    Model {
+        textures,
+        output,
+        count: 0,
+    }
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
